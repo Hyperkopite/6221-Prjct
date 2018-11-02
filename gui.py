@@ -2,9 +2,9 @@
 import time
 import psutil
 from tkinter import *
+from tkinter import scrolledtext
 import threading
 import subprocess
-from tkinter import scrolledtext
 import requests
 
 
@@ -72,15 +72,22 @@ def net_speed():
 
 
 def net_info_center():
+    central_info.delete(0.0, END)
+    # output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    # central_info.insert('insert', output[0])
     output = subprocess.Popen(['ipconfig'], stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
     central_info.insert('insert', output[0])
+    get_ip_info()
+    global timer_net_info_center
+    timer_net_info_center = threading.Timer(10, net_info_center)
+    timer_net_info_center.start()
 
 # start from here
 
 
 root = Tk()
 
-center_window(1000, 700)
+center_window(1200, 700)
 root.title('Protector')
 
 frame_btns = Frame(root)
@@ -94,7 +101,7 @@ net_speed()
 central_info = scrolledtext.ScrolledText(frame_center, width=300, height=150, relief=GROOVE, wrap=WORD)
 central_info.pack()
 net_info_center()
-get_ip_info()
+
 
 btn_wifi_browse = Button(frame_btns, text='Browse all APs', width=15, height=2)
 btn_wifi_browse.pack(side=LEFT)
