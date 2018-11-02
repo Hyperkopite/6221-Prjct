@@ -73,9 +73,9 @@ def net_speed():
 
 def net_info_center():
     central_info.delete(0.0, END)
-    # output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    # central_info.insert('insert', output[0])
-    output = subprocess.Popen(['ipconfig'], stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    central_info.insert('insert', output[0])
+    output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
     central_info.insert('insert', output[0])
     get_ip_info()
     global timer_net_info_center
