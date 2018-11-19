@@ -2,9 +2,9 @@
 import time
 import psutil
 from tkinter import *
+from tkinter import scrolledtext
 import threading
 import subprocess
-from tkinter import scrolledtext
 import requests
 
 
@@ -16,6 +16,12 @@ def get_ip_info():
             central_info.insert('insert', '\n' + strr + ': ' + str(r.json()[strr]) + '\n')
 
 
+def center_window_auto_full():
+    # get the width and height of screen
+    ws = root.winfo_screenwidth()
+    hs = root.winfo_screenheight()
+    root.geometry('%dx%d' %(ws, hs))
+    
 def center_window(w, h):
     # get the width and height of screen
     ws = root.winfo_screenwidth()
@@ -72,15 +78,22 @@ def net_speed():
 
 
 def net_info_center():
-    output = subprocess.Popen(['ipconfig'], stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    central_info.delete(0.0, END)
+    output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
     central_info.insert('insert', output[0])
+    output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    central_info.insert('insert', output[0])
+    get_ip_info()
+    global timer_net_info_center
+    timer_net_info_center = threading.Timer(10, net_info_center)
+    timer_net_info_center.start()
 
 # start from here
 
 
 root = Tk()
 
-center_window(1000, 700)
+center_window_auto_full()
 root.title('Protector')
 
 frame_btns = Frame(root)
@@ -91,30 +104,30 @@ status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
 status.pack(side=BOTTOM, fill=X)
 net_speed()
 
-central_info = scrolledtext.ScrolledText(frame_center, width=300, height=150, relief=GROOVE, wrap=WORD)
+central_info = scrolledtext.ScrolledText(frame_center, width=int (root.winfo_screenwidth() / 10), height=int (root.winfo_screenheight() / 6), relief=GROOVE, wrap=WORD)
 central_info.pack()
 net_info_center()
-get_ip_info()
 
-btn_wifi_browse = Button(frame_btns, text='Browse all APs', width=15, height=2)
+
+btn_wifi_browse = Button(frame_btns, text='Show APs', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_wifi_browse.pack(side=LEFT)
 
-btn_analyze = Button(frame_btns, text='Analyze', width=15, height=2)
+btn_analyze = Button(frame_btns, text='Analyze', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_analyze.pack(side=LEFT)
 
-btn_Fun3 = Button(frame_btns, text='Fun3', width=15, height=2)
+btn_Fun3 = Button(frame_btns, text='Fun3', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_Fun3.pack(side=LEFT)
 
-btn_Fun4 = Button(frame_btns, text='Fun4', width=15, height=2)
+btn_Fun4 = Button(frame_btns, text='Fun4', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_Fun4.pack(side=LEFT)
 
-btn_Fun5 = Button(frame_btns, text='Fun5', width=15, height=2)
+btn_Fun5 = Button(frame_btns, text='Fun5', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_Fun5.pack(side=LEFT)
 
-btn_reset = Button(frame_btns, text='Reset', width=15, height=2)
+btn_reset = Button(frame_btns, text='Reset', width=int (root.winfo_screenwidth() / 120), height=2)
 btn_reset.pack(side=LEFT)
 
-frame_btns.pack(side=TOP, fill=BOTH, padx=150, pady=40)
-frame_center.pack(side=BOTTOM, padx=150, pady=30)
+frame_btns.pack(side=TOP, fill=BOTH, padx=int (root.winfo_screenwidth() / 7), pady=int (root.winfo_screenwidth() / 25))
+frame_center.pack(side=BOTTOM, padx=int (root.winfo_screenwidth() / 7), pady=int (root.winfo_screenwidth() / 30))
 
 mainloop()
