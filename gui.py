@@ -13,7 +13,7 @@ def get_ip_info():
     for strr in r.json():
         if strr != 'location':
             # print(strr + ': ' + str(r.json()[strr]))
-            central_info.insert('insert', '\n' + strr + ': ' + str(r.json()[strr]) + '\n')
+            ip_info.insert(END, '\n' + strr + ': ' + str(r.json()[strr]) + '\n')
 
 
 def center_window_auto_full():
@@ -21,7 +21,8 @@ def center_window_auto_full():
     ws = root.winfo_screenwidth()
     hs = root.winfo_screenheight()
     root.geometry('%dx%d' %(ws, hs))
-    
+
+
 def center_window(w, h):
     # get the width and height of screen
     ws = root.winfo_screenwidth()
@@ -78,15 +79,22 @@ def net_speed():
 
 
 def net_info_center():
-    central_info.delete(0.0, END)
+    # central_info.delete(0.0, END)
     output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    central_info.insert('insert', output[0])
+    central_info.insert(END, output[0])
     output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    central_info.insert('insert', output[0])
-    get_ip_info()
-    global timer_net_info_center
-    timer_net_info_center = threading.Timer(10, net_info_center)
-    timer_net_info_center.start()
+    central_info.insert(END, output[0])
+    # global timer_net_info_center
+    # timer_net_info_center = threading.Timer(1, net_info_center)
+    # timer_net_info_center.start()
+
+
+def cap():
+    central_info.insert(END, bettercap.stdout.readline())
+    central_info.see(END)
+    global timer_cap
+    timer_cap = threading.Timer(0, cap)
+    timer_cap.start()
 
 # start from here
 
@@ -98,36 +106,44 @@ root.title('Protector')
 
 frame_btns = Frame(root)
 frame_center = Frame(root)
+frame_right = Frame(root)
 
 txt_status = StringVar()
 status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
 status.pack(side=BOTTOM, fill=X)
 net_speed()
 
-central_info = scrolledtext.ScrolledText(frame_center, width=int (root.winfo_screenwidth() / 10), height=int (root.winfo_screenheight() / 6), relief=GROOVE, wrap=WORD)
+central_info = scrolledtext.ScrolledText(frame_center, width=int(root.winfo_screenwidth() / 15), height=int (root.winfo_screenheight() / 6), relief=GROOVE, wrap=WORD)
 central_info.pack()
 net_info_center()
 
+ip_info = Text(frame_right, width=int(root.winfo_screenwidth() / 20), height=int (root.winfo_screenheight() / 8), relief=GROOVE, wrap=WORD)
+ip_info.pack()
+get_ip_info()
 
-btn_wifi_browse = Button(frame_btns, text='Show APs', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_wifi_browse.pack(side=LEFT)
 
-btn_analyze = Button(frame_btns, text='Analyze', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_analyze = Button(frame_btns, text='Analyze', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_analyze.pack(side=LEFT)
 
-btn_Fun3 = Button(frame_btns, text='Fun3', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_Fun3 = Button(frame_btns, text='Fun3', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_Fun3.pack(side=LEFT)
 
-btn_Fun4 = Button(frame_btns, text='Fun4', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_Fun4 = Button(frame_btns, text='Fun4', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_Fun4.pack(side=LEFT)
 
-btn_Fun5 = Button(frame_btns, text='Fun5', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_Fun5 = Button(frame_btns, text='Fun5', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_Fun5.pack(side=LEFT)
 
-btn_reset = Button(frame_btns, text='Reset', width=int (root.winfo_screenwidth() / 120), height=2)
+btn_reset = Button(frame_btns, text='Reset', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_reset.pack(side=LEFT)
 
-frame_btns.pack(side=TOP, fill=BOTH, padx=int (root.winfo_screenwidth() / 7), pady=int (root.winfo_screenwidth() / 25))
-frame_center.pack(side=BOTTOM, padx=int (root.winfo_screenwidth() / 7), pady=int (root.winfo_screenwidth() / 30))
+frame_btns.pack(side=TOP, fill=BOTH, padx=int(root.winfo_screenwidth() / 7), pady=int(root.winfo_screenwidth() / 25))
+frame_center.pack(side=LEFT, padx=int(root.winfo_screenwidth() / 8), pady=int(root.winfo_screenwidth() / 30))
+frame_right.pack(side=RIGHT, padx=int(root.winfo_screenwidth() / 20), pady=int(root.winfo_screenwidth() / 18))
+
+bettercap = subprocess.Popen('bettercap -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+cap()
 
 mainloop()
