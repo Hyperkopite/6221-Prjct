@@ -6,6 +6,7 @@ from tkinter import scrolledtext
 import threading
 import subprocess
 import requests
+import os
 
 
 def get_ip_info():
@@ -14,6 +15,7 @@ def get_ip_info():
         if strr != 'location':
             # print(strr + ': ' + str(r.json()[strr]))
             ip_info.insert(END, '\n' + strr + ': ' + str(r.json()[strr]) + '\n')
+    ip_info.see(END)
 
 
 def center_window_auto_full():
@@ -73,17 +75,18 @@ def net_speed():
 
     txt_status.set('Upload: %5d %s' % (int(sent), unit) + '   Download: %5d %s' % (int(recv), unit))  # Update statusBar
     status.pack(side=BOTTOM, fill=X)
-    global timer_status_bar  # for recursively refreshing status bar
-    timer_status_bar = threading.Timer(0, net_speed)
-    timer_status_bar.start()
+    cap()
+    global timer  # for recursively refreshing status bar and sniff data
+    timer = threading.Timer(0, net_speed)
+    timer.start()
 
 
 def net_info_center():
     # central_info.delete(0.0, END)
     output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    central_info.insert(END, output[0])
+    ip_info.insert(END, output[0])
     output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    central_info.insert(END, output[0])
+    ip_info.insert(END, output[0])
     # global timer_net_info_center
     # timer_net_info_center = threading.Timer(1, net_info_center)
     # timer_net_info_center.start()
@@ -92,11 +95,12 @@ def net_info_center():
 def cap():
     central_info.insert(END, bettercap.stdout.readline())
     central_info.see(END)
-    global timer_cap
-    timer_cap = threading.Timer(0, cap)
-    timer_cap.start()
 
-# start from here
+
+def quit():
+    os.system('pkill bettercap')
+    root.destroy()
+# start from h
 
 
 root = Tk()
@@ -108,18 +112,20 @@ frame_btns = Frame(root)
 frame_center = Frame(root)
 frame_right = Frame(root)
 
-txt_status = StringVar()
-status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
-status.pack(side=BOTTOM, fill=X)
-net_speed()
+ip_info = scrolledtext.ScrolledText(frame_right, width=int(root.winfo_screenwidth() / 10), height=int(root.winfo_screenheight() / 8), relief=GROOVE, wrap=WORD)
+ip_info.pack()
 
 central_info = scrolledtext.ScrolledText(frame_center, width=int(root.winfo_screenwidth() / 15), height=int (root.winfo_screenheight() / 6), relief=GROOVE, wrap=WORD)
 central_info.pack()
 net_info_center()
-
-ip_info = Text(frame_right, width=int(root.winfo_screenwidth() / 20), height=int (root.winfo_screenheight() / 8), relief=GROOVE, wrap=WORD)
-ip_info.pack()
 get_ip_info()
+
+bettercap = subprocess.Popen('bettercap -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+
+txt_status = StringVar()
+status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
+status.pack(side=BOTTOM, fill=X)
+net_speed()
 
 btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_wifi_browse.pack(side=LEFT)
@@ -136,14 +142,11 @@ btn_Fun4.pack(side=LEFT)
 btn_Fun5 = Button(frame_btns, text='Fun5', width=int(root.winfo_screenwidth() / 120), height=2)
 btn_Fun5.pack(side=LEFT)
 
-btn_reset = Button(frame_btns, text='Reset', width=int(root.winfo_screenwidth() / 120), height=2)
-btn_reset.pack(side=LEFT)
+btn_quit = Button(frame_btns, text='Quit', width=int(root.winfo_screenwidth() / 120), height=2, command=quit)
+btn_quit.pack(side=LEFT)
 
 frame_btns.pack(side=TOP, fill=BOTH, padx=int(root.winfo_screenwidth() / 7), pady=int(root.winfo_screenwidth() / 25))
-frame_center.pack(side=LEFT, padx=int(root.winfo_screenwidth() / 8), pady=int(root.winfo_screenwidth() / 30))
+frame_center.pack(side=LEFT, padx=int(root.winfo_screenwidth() / 25), pady=int(root.winfo_screenwidth() / 30))
 frame_right.pack(side=RIGHT, padx=int(root.winfo_screenwidth() / 20), pady=int(root.winfo_screenwidth() / 18))
-
-bettercap = subprocess.Popen('bettercap -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
-cap()
 
 mainloop()
