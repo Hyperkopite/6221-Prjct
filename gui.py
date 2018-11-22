@@ -62,7 +62,8 @@ def center_window_auto_full():
     ws = root.winfo_screenwidth()
     hs = root.winfo_screenheight()
     root.geometry('%dx%d' %(ws, hs))
-
+    root.overrideredirect(True)
+    root.config(cursor="none")
 
 def center_window(w, h, window):
     # get the width and height of screen
