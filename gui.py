@@ -239,3 +239,4 @@ frame_center.pack(side=LEFT, padx=int(root.winfo_screenwidth() / 25), pady=int(r
 frame_right.pack(side=RIGHT, padx=int(root.winfo_screenwidth() / 20), pady=int(root.winfo_screenwidth() / 18))
 
 mainloop()
+
