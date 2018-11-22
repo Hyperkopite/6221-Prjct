@@ -3,10 +3,49 @@ import time
 import psutil
 from tkinter import *
 from tkinter import scrolledtext
+import tkinter as tk
 import threading
 import subprocess
 import requests
 import os
+
+
+class Scrollable(tk.Frame):
+    """
+       Make a frame scrollable with scrollbar on the right.
+       After adding or removing widgets to the scrollable frame,
+       call the update() method to refresh the scrollable area.
+    """
+
+    def __init__(self, frame, width=16):
+
+        scrollbar = tk.Scrollbar(frame, width=width)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
+
+        self.canvas = tk.Canvas(frame, yscrollcommand=scrollbar.set)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scrollbar.config(command=self.canvas.yview)
+
+        self.canvas.bind('<Configure>', self.__fill_canvas)
+
+        # base class initialization
+        tk.Frame.__init__(self, frame)
+
+        # assign this obj (the inner frame) to the windows item of the canvas
+        self.windows_item = self.canvas.create_window(0,0, window=self, anchor=tk.NW)
+
+    def __fill_canvas(self, event):
+        "Enlarge the windows item to the canvas width"
+
+        canvas_width = event.width
+        self.canvas.itemconfig(self.windows_item, width = canvas_width)
+
+    def update(self):
+        "Update the canvas and the scrollregion"
+
+        self.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox(self.windows_item))
 
 
 def get_ip_info():
@@ -25,14 +64,14 @@ def center_window_auto_full():
     root.geometry('%dx%d' %(ws, hs))
 
 
-def center_window(w, h):
+def center_window(w, h, window):
     # get the width and height of screen
     ws = root.winfo_screenwidth()
     hs = root.winfo_screenheight()
     # calculate x,y
     x = (ws/2) - (w/2)
     y = (hs/2) - (h/2)
-    root.geometry('%dx%d+%d+%d' % (w, h, x, y))
+    window.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
 
 def io_get_bytes(sent=False, recv=False):
@@ -83,8 +122,8 @@ def net_speed():
 
 def net_info_center():
     # central_info.delete(0.0, END)
-    output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    ip_info.insert(END, output[0])
+    # output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    # ip_info.insert(END, output[0])
     output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
     ip_info.insert(END, output[0])
     # global timer_net_info_center
@@ -100,13 +139,62 @@ def cap():
 def quit():
     os.system('pkill bettercap')
     root.destroy()
-# start from h
+
+
+def create_window_connect():
+    window_cnnct = tk.Toplevel(root)
+    window_cnnct.title('Connect to an AP')
+    center_window(int(root.winfo_screenwidth() / 1.6), int(root.winfo_screenheight() / 3), window_cnnct)
+    frame_cnnct = Frame(window_cnnct)
+
+    # label_ap_name = Label(frame_entry, text='ESSID:')
+
+    label_pswd = Label(frame_cnnct, text='Password (if the ap is not encrypted, just click \"OK\"')
+    label_pswd.pack(side=TOP)
+
+    entry_pswd = Entry(frame_cnnct, width=int(root.winfo_screenwidth() / 30))
+    entry_pswd.pack(side=TOP)
+
+    btn_cnfrm = Button(frame_cnnct, text='OK')
+    btn_cnfrm.pack(pady=int(root.winfo_screenwidth() / 60))
+
+    frame_cnnct.pack(pady=int(root.winfo_screenwidth() / 40))
+
+    window_cnnct.mainloop()
+
+
+def create_window_aps():
+    window_aps = tk.Toplevel(root)
+    window_aps.title('Access Points')
+    center_window(int(root.winfo_screenwidth() / 1.5), int(root.winfo_screenheight() / 1.3), window_aps)
+    frame_aps = Scrollable(window_aps, width=25)
+    # vbar = scrolledtext.Scrollbar(frame_aps, orient=VERTICAL)
+    # vbar.pack(side=RIGHT, fill=Y)
+    output = subprocess.Popen(
+        'iwlist wlan0 scan | grep -E \'ESSID|Quality|Group Cipher|Pairwise Ciphers|Authentication Suites\'',
+        stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    wlan_info = str(''.join(output[0]))
+    wlan_info = wlan_info.replace('Quality', '\n\tQuality')
+    list_aps = wlan_info.split('\t')
+    btn_aps = []
+    # print(len(list_aps))
+    # for i in range(0, len(list_aps)):
+    #     print(list_aps[i] + '\n------------------------------------------------------------\n')
+    for i in range(1, len(list_aps)):
+        btn_aps.append(Button(frame_aps, text=list_aps[i], width=int(window_aps.winfo_screenwidth()), command=create_window_connect))
+        btn_aps[i - 1].pack(side=TOP)
+    # vbar.config(command=frame_aps.yview)
+    frame_aps.update()
+    window_aps.mainloop()
+# start from here
 
 
 root = Tk()
 
 center_window_auto_full()
 root.title('Protector')
+# root.overrideredirect(True)
+# root.config(cursor="none")
 
 frame_btns = Frame(root)
 frame_center = Frame(root)
@@ -120,14 +208,14 @@ central_info.pack()
 net_info_center()
 get_ip_info()
 
-bettercap = subprocess.Popen('bettercap -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+bettercap = subprocess.Popen('bettercap -I wlan0 -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
 
 txt_status = StringVar()
 status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
 status.pack(side=BOTTOM, fill=X)
 net_speed()
 
-btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 120), height=2)
+btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 120), height=2, command=create_window_aps)
 btn_wifi_browse.pack(side=LEFT)
 
 btn_analyze = Button(frame_btns, text='Analyze', width=int(root.winfo_screenwidth() / 120), height=2)
