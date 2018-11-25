@@ -32,8 +32,13 @@ def portServiceList():
 
 
 def isTor():
-    print("isTor?") #this part is left to be completed in the future
+    s_result = subprocess.getoutput('service tor status')
+    o_result = re.search(r'tor.service could not', s_result)
 
+    if(o_result):
+        print("Not under Tor!")
+    else:
+        print("Under Tor!")
 
 def report():
     print("--------------------")
