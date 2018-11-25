@@ -62,8 +62,7 @@ def center_window_auto_full():
     ws = root.winfo_screenwidth()
     hs = root.winfo_screenheight()
     root.geometry('%dx%d' %(ws, hs))
-    root.overrideredirect(True)
-    root.config(cursor="none")
+
 
 def center_window(w, h, window):
     # get the width and height of screen
@@ -123,8 +122,8 @@ def net_speed():
 
 def net_info_center():
     # central_info.delete(0.0, END)
-    # output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    # ip_info.insert(END, output[0])
+    output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    ip_info.insert(END, output[0])
     output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
     ip_info.insert(END, output[0])
     # global timer_net_info_center
@@ -142,13 +141,43 @@ def quit():
     root.destroy()
 
 
-def create_window_connect():
+def connect(id, pswd, window):
+    contents = """
+auto lo
+
+iface lo inet loopback
+iface eth0 inet dhcp
+
+#auto eth0
+auto wlan0
+auto wlan1
+
+iface wlan0 inet static
+address 192.168.42.1
+netmask 255.255.255.0
+wireless-power off
+
+up iptables-restore < /etc/iptables.ipv4.nat
+
+allow-hotplug wlan1
+iface wlan1 inet dhcp
+"""
+
+    with open('/etc/network/interfaces', 'w') as f:
+        f.writelines(contents)
+        f.write('\nwpa-ssid \"' + id + '\"\nwpa-psk \"' + pswd + '\"')
+        f.close()
+    window.destroy()
+
+
+def create_window_connect(id):
     window_cnnct = tk.Toplevel(root)
     window_cnnct.title('Connect to an AP')
     center_window(int(root.winfo_screenwidth() / 1.6), int(root.winfo_screenheight() / 3), window_cnnct)
     frame_cnnct = Frame(window_cnnct)
 
-    # label_ap_name = Label(frame_entry, text='ESSID:')
+    label_ap_name = Label(frame_cnnct, text='ESSID:' + id)
+    label_ap_name.pack(side=TOP)
 
     label_pswd = Label(frame_cnnct, text='Password (if the ap is not encrypted, just click \"OK\"')
     label_pswd.pack(side=TOP)
@@ -156,7 +185,7 @@ def create_window_connect():
     entry_pswd = Entry(frame_cnnct, width=int(root.winfo_screenwidth() / 30))
     entry_pswd.pack(side=TOP)
 
-    btn_cnfrm = Button(frame_cnnct, text='OK')
+    btn_cnfrm = Button(frame_cnnct, text='OK', command=lambda: connect(id, entry_pswd.get(), window_cnnct))
     btn_cnfrm.pack(pady=int(root.winfo_screenwidth() / 60))
 
     frame_cnnct.pack(pady=int(root.winfo_screenwidth() / 40))
@@ -169,8 +198,6 @@ def create_window_aps():
     window_aps.title('Access Points')
     center_window(int(root.winfo_screenwidth() / 1.5), int(root.winfo_screenheight() / 1.3), window_aps)
     frame_aps = Scrollable(window_aps, width=25)
-    # vbar = scrolledtext.Scrollbar(frame_aps, orient=VERTICAL)
-    # vbar.pack(side=RIGHT, fill=Y)
     output = subprocess.Popen(
         'iwlist wlan0 scan | grep -E \'ESSID|Quality|Group Cipher|Pairwise Ciphers|Authentication Suites\'',
         stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
@@ -178,13 +205,16 @@ def create_window_aps():
     wlan_info = wlan_info.replace('Quality', '\n\tQuality')
     list_aps = wlan_info.split('\t')
     btn_aps = []
+    essid = []
     # print(len(list_aps))
     # for i in range(0, len(list_aps)):
     #     print(list_aps[i] + '\n------------------------------------------------------------\n')
     for i in range(1, len(list_aps)):
-        btn_aps.append(Button(frame_aps, text=list_aps[i], width=int(window_aps.winfo_screenwidth()), command=create_window_connect))
+        essid.append(list_aps[i][list_aps[i].find('ESSID') + 7:list_aps[i].find('\"', list_aps[i].find('ESSID') + 7)])
+        btn_aps.append(Button(frame_aps, text=list_aps[i], width=int(window_aps.winfo_screenwidth()), command=lambda i=i: create_window_connect(essid[i - 1])))
+        # print(essid[i - 1])
         btn_aps[i - 1].pack(side=TOP)
-    # vbar.config(command=frame_aps.yview)
+
     frame_aps.update()
     window_aps.mainloop()
 # start from here
