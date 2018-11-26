@@ -3,6 +3,7 @@ import time
 import psutil
 from tkinter import *
 from tkinter import scrolledtext
+from tkinter import font
 import tkinter as tk
 import threading
 import subprocess
@@ -219,6 +220,9 @@ def show_status():
 
 
 root = Tk()
+buttonFont = font.Font(family='Helvetica', size=16, weight='bold')
+central_infoFont = font.Font(family='Helvetica', size=16, weight='normal')
+statusFont = font.Font(family='Helvetica', size=12, weight='normal')
 
 center_window_auto_full()
 root.title('Protector')
@@ -228,32 +232,32 @@ root.title('Protector')
 frame_btns = Frame(root)
 frame_center = Frame(root)
 
-central_info = scrolledtext.ScrolledText(frame_center, relief=GROOVE, wrap=WORD, borderwidth=1, highlightthickness=0)
+central_info = scrolledtext.ScrolledText(frame_center, relief=GROOVE, wrap=WORD, borderwidth=1, highlightthickness=0, font=central_infoFont)
 central_info.pack(side=LEFT, expand=True, fill='both')
-central_info.configure(bg='#2c2d3c', fg='white')
+central_info.configure(bg='#2c2d3c', fg='white', padx=50, pady=50)
 
 bettercap = subprocess.Popen('sudo bettercap', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
 
 txt_status = StringVar()
-status = Label(root, textvariable=txt_status, relief=GROOVE, anchor=W, borderwidth=1, highlightthickness=0)
+status = Label(root, textvariable=txt_status, relief=GROOVE, anchor=W, borderwidth=1, highlightthickness=0, font=statusFont)
 status.pack(side=BOTTOM, fill=X)
 status.configure(bg='black', fg='white')
 geo_info = get_ip_info()
 net_speed()
 
-btn_wifi_browse = Button(frame_btns, text='Connect', command=create_window_aps, borderwidth=1, highlightthickness=0)
+btn_wifi_browse = Button(frame_btns, text='Connect', borderwidth=1, highlightthickness=0, font=buttonFont, command=create_window_aps)
 btn_wifi_browse.pack(side=LEFT, expand=True, fill='both')
 btn_wifi_browse.configure(bg='black', fg='white')
 
-btn_analyze = Button(frame_btns, text='Analyze', borderwidth=1, highlightthickness=0, command=net_speed)
+btn_analyze = Button(frame_btns, text='Analyze', borderwidth=1, highlightthickness=0, font=buttonFont, command=net_speed)
 btn_analyze.pack(side=LEFT, expand=True, fill='both')
 btn_analyze.configure(bg='black', fg='white')
 
-btn_Status = Button(frame_btns, text='Status', borderwidth=1, highlightthickness=0, command=show_status)
+btn_Status = Button(frame_btns, text='Status', borderwidth=1, highlightthickness=0, font=buttonFont, command=show_status)
 btn_Status.pack(side=LEFT, expand=True, fill='both')
 btn_Status.configure(bg='black', fg='white')
 
-btn_quit = Button(frame_btns, text='Quit', borderwidth=1, highlightthickness=0, command=quit)
+btn_quit = Button(frame_btns, text='Quit', borderwidth=1, highlightthickness=0, font=buttonFont, command=quit)
 btn_quit.pack(side=LEFT, expand=True, fill='both')
 btn_quit.configure(bg='black', fg='white')
 
