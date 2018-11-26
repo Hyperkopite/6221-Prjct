@@ -239,6 +239,7 @@ status = Label(root, textvariable=txt_status, relief=GROOVE, anchor=W, borderwid
 status.pack(side=BOTTOM, fill=X)
 status.configure(bg='black', fg='white')
 geo_info = get_ip_info()
+net_speed()
 
 btn_wifi_browse = Button(frame_btns, text='Connect', command=create_window_aps, borderwidth=1, highlightthickness=0)
 btn_wifi_browse.pack(side=LEFT, expand=True, fill='both')
@@ -256,9 +257,9 @@ btn_quit = Button(frame_btns, text='Quit', borderwidth=1, highlightthickness=0, 
 btn_quit.pack(side=LEFT, expand=True, fill='both')
 btn_quit.configure(bg='black', fg='white')
 
-frame_btns.pack(side=TOP, expand=True, fill=BOTH)
+frame_btns.pack(side=LEFT, expand=True, fill='both')
 frame_btns.place(relheight=0.25, relwidth=1)
-frame_center.pack(expand=True, fill=BOTH)
+frame_center.pack(expand=True, fill='both')
 frame_center.place(rely=0.25, relheight=0.75, relwidth=1)
 
 mainloop()
