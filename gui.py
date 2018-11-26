@@ -50,11 +50,12 @@ class Scrollable(tk.Frame):
 
 def get_ip_info():
     r = requests.get('http://api.ipstack.com/' + str(requests.get('http://httpbin.org/ip').json()['origin']) + '?access_key=f421a18339bb3370006ce3317acfb9a7')
+    geo_info = ''
     for strr in r.json():
-        if strr != 'location':
+        if strr == 'ip' or strr == 'city' or strr == 'country_name' or strr == 'type' or strr == 'region_name' or strr == 'latitude' or strr == 'longitude':
             # print(strr + ': ' + str(r.json()[strr]))
-            ip_info.insert(END, '\n' + strr + ': ' + str(r.json()[strr]) + '\n')
-    ip_info.see(END)
+            geo_info += strr + ': ' + str(r.json()[strr]) + '    |    '
+    return geo_info
 
 
 def center_window_auto_full():
@@ -112,26 +113,15 @@ def net_speed():
         recv = recv / k
         unit = 'KB/s'
 
-    txt_status.set('Upload: %5d %s' % (int(sent), unit) + '   Download: %5d %s' % (int(recv), unit))  # Update statusBar
+    txt_status.set('Upload: %5d %s' % (int(sent), unit) + '   Download: %5d %s' % (int(recv), unit) + '    |    ' + geo_info) # Update statusBar
     status.pack(side=BOTTOM, fill=X)
-    cap()
+    analyze()
     global timer  # for recursively refreshing status bar and sniff data
     timer = threading.Timer(0, net_speed)
     timer.start()
 
 
-def net_info_center():
-    # central_info.delete(0.0, END)
-    output = subprocess.Popen('ifconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    ip_info.insert(END, output[0])
-    output = subprocess.Popen('iwconfig', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
-    ip_info.insert(END, output[0])
-    # global timer_net_info_center
-    # timer_net_info_center = threading.Timer(1, net_info_center)
-    # timer_net_info_center.start()
-
-
-def cap():
+def analyze():
     central_info.insert(END, bettercap.stdout.readline())
     central_info.see(END)
 
@@ -173,7 +163,7 @@ iface wlan1 inet dhcp
 def create_window_connect(id):
     window_cnnct = tk.Toplevel(root)
     window_cnnct.title('Connect to an AP')
-    center_window(int(root.winfo_screenwidth() / 1.6), int(root.winfo_screenheight() / 3), window_cnnct)
+    center_window(int(root.winfo_screenwidth()), int(root.winfo_screenheight()), window_cnnct)
     frame_cnnct = Frame(window_cnnct)
 
     label_ap_name = Label(frame_cnnct, text='ESSID:' + id)
@@ -196,7 +186,7 @@ def create_window_connect(id):
 def create_window_aps():
     window_aps = tk.Toplevel(root)
     window_aps.title('Access Points')
-    center_window(int(root.winfo_screenwidth() / 1.5), int(root.winfo_screenheight() / 1.3), window_aps)
+    center_window(int(root.winfo_screenwidth()), int(root.winfo_screenheight()), window_aps)
     frame_aps = Scrollable(window_aps, width=25)
     output = subprocess.Popen(
         'iwlist wlan0 scan | grep -E \'ESSID|Quality|Group Cipher|Pairwise Ciphers|Authentication Suites\'',
@@ -214,9 +204,17 @@ def create_window_aps():
         btn_aps.append(Button(frame_aps, text=list_aps[i], width=int(window_aps.winfo_screenwidth()), command=lambda i=i: create_window_connect(essid[i - 1])))
         # print(essid[i - 1])
         btn_aps[i - 1].pack(side=TOP)
-
+    btn_close = Button(frame_aps, text='Close', width=int(window_aps.winfo_screenwidth()), command=window_aps.destroy)
+    btn_close.pack(side=BOTTOM)
     frame_aps.update()
     window_aps.mainloop()
+
+
+def show_status():
+    output = subprocess.Popen('python3 status_analyze.py', stdout=subprocess.PIPE, shell=True, universal_newlines=True).communicate()
+    central_info.insert(END, output[0])
+
+
 # start from here
 
 
@@ -229,44 +227,30 @@ root.title('Protector')
 
 frame_btns = Frame(root)
 frame_center = Frame(root)
-frame_right = Frame(root)
-
-ip_info = scrolledtext.ScrolledText(frame_right, width=int(root.winfo_screenwidth() / 10), height=int(root.winfo_screenheight() / 8), relief=GROOVE, wrap=WORD)
-ip_info.pack()
 
 central_info = scrolledtext.ScrolledText(frame_center, width=int(root.winfo_screenwidth() / 15), height=int (root.winfo_screenheight() / 6), relief=GROOVE, wrap=WORD)
 central_info.pack()
-net_info_center()
-get_ip_info()
 
 bettercap = subprocess.Popen('bettercap -I wlan0 -X -L', stdout=subprocess.PIPE, shell=True, universal_newlines=True)
 
 txt_status = StringVar()
 status = Label(root, textvariable=txt_status, bd=1, relief=SUNKEN, anchor=W)
 status.pack(side=BOTTOM, fill=X)
-net_speed()
+geo_info = get_ip_info()
 
-btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 120), height=2, command=create_window_aps)
+btn_wifi_browse = Button(frame_btns, text='Show APs', width=int(root.winfo_screenwidth() / 45), height=6, command=create_window_aps)
 btn_wifi_browse.pack(side=LEFT)
 
-btn_analyze = Button(frame_btns, text='Analyze', width=int(root.winfo_screenwidth() / 120), height=2)
+btn_analyze = Button(frame_btns, text='Analyze', width=int(root.winfo_screenwidth() / 45), height=6, command=net_speed)
 btn_analyze.pack(side=LEFT)
 
-btn_Fun3 = Button(frame_btns, text='Fun3', width=int(root.winfo_screenwidth() / 120), height=2)
-btn_Fun3.pack(side=LEFT)
+btn_Status = Button(frame_btns, text='Status', width=int(root.winfo_screenwidth() / 45), height=6, command=show_status)
+btn_Status.pack(side=LEFT)
 
-btn_Fun4 = Button(frame_btns, text='Fun4', width=int(root.winfo_screenwidth() / 120), height=2)
-btn_Fun4.pack(side=LEFT)
-
-btn_Fun5 = Button(frame_btns, text='Fun5', width=int(root.winfo_screenwidth() / 120), height=2)
-btn_Fun5.pack(side=LEFT)
-
-btn_quit = Button(frame_btns, text='Quit', width=int(root.winfo_screenwidth() / 120), height=2, command=quit)
+btn_quit = Button(frame_btns, text='Quit', width=int(root.winfo_screenwidth() / 45), height=6, command=quit)
 btn_quit.pack(side=LEFT)
 
-frame_btns.pack(side=TOP, fill=BOTH, padx=int(root.winfo_screenwidth() / 7), pady=int(root.winfo_screenwidth() / 25))
-frame_center.pack(side=LEFT, padx=int(root.winfo_screenwidth() / 25), pady=int(root.winfo_screenwidth() / 30))
-frame_right.pack(side=RIGHT, padx=int(root.winfo_screenwidth() / 20), pady=int(root.winfo_screenwidth() / 18))
+frame_btns.pack(side=TOP, fill=BOTH, padx=int(root.winfo_screenwidth() / 10))
+frame_center.pack(side=BOTTOM, padx=int(root.winfo_screenwidth() / 25), pady=int(root.winfo_screenwidth() / 30))
 
 mainloop()
-
